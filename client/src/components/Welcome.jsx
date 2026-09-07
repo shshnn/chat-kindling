@@ -11,14 +11,24 @@ function generateRoomCode() {
 }
 
 export default function Welcome({ onJoin }) {
-  const [name, setName] = useState('');
+  const saved = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('kindling_last_name') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+
+  const [name, setName] = useState(typeof saved === 'string' ? saved : '');
   const [roomCode, setRoomCode] = useState(generateRoomCode());
   const [mode, setMode] = useState('create');
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    onJoin({ name: name.trim(), roomCode: roomCode.trim().toUpperCase() });
+    const trimmed = name.trim();
+    localStorage.setItem('kindling_last_name', trimmed);
+    onJoin({ name: trimmed, roomCode: roomCode.trim().toUpperCase() });
   }
 
   return (
