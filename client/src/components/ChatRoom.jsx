@@ -19,6 +19,7 @@ export default function ChatRoom({
   rooms,
   onSwitchRoom,
   onLeave,
+  onDestroy,
   onFriendName,
 }) {
   const [messages, setMessages] = useState([]);
@@ -38,6 +39,8 @@ export default function ChatRoom({
   const userIdRef = useRef(getUserId());
   const onFriendNameRef = useRef(onFriendName);
   onFriendNameRef.current = onFriendName;
+  const onDestroyRef = useRef(onDestroy);
+  onDestroyRef.current = onDestroy;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,6 +97,19 @@ export default function ChatRoom({
       setTypingUser(isTyping ? typingName : null);
     });
 
+    socket.on('room-destroyed', ({ by }) => {
+      if (by === name) {
+        alert('방을 폭파했어요 💥\n대화 기록이 모두 삭제됐어요.');
+      } else {
+        alert(`${by || '상대'}님이 방을 폭파했어요 💥\n대화 기록이 모두 삭제됐어요.`);
+      }
+      onDestroyRef.current?.();
+    });
+
+    socket.on('destroy-error', ({ message }) => {
+      alert(message || '방 폭파에 실패했어요');
+    });
+
     return () => socket.disconnect();
   }, [roomCode, name]);
 
@@ -107,6 +123,14 @@ export default function ChatRoom({
     typingTimeoutRef.current = setTimeout(() => {
       socketRef.current?.emit('typing', { isTyping: false });
     }, 1500);
+  }
+
+  function handleDestroyRoom() {
+    const ok = window.confirm(
+      `방 ${roomCode}을(를) 폭파할까요?\n\n대화 기록이 모두 삭제되고, 상대도 방에서 나가져요.`
+    );
+    if (!ok) return;
+    socketRef.current?.emit('destroy-room');
   }
 
   function sendMessage(text, imageUrl) {
@@ -189,6 +213,16 @@ export default function ChatRoom({
           </div>
         </div>
         <div className="room-badge">{roomCode}</div>
+        <button
+          type="button"
+          className="destroy-btn"
+          onClick={handleDestroyRoom}
+          disabled={!connected}
+          title="방 폭파"
+          aria-label="방 폭파"
+        >
+          💥
+        </button>
       </header>
 
       <div className="chat-messages">

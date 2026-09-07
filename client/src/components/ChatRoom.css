@@ -113,6 +113,31 @@
   flex-shrink: 0;
 }
 
+.destroy-btn {
+  background: #fff0f0;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.destroy-btn:hover:not(:disabled) {
+  background: #ffd6d6;
+  transform: scale(1.08);
+}
+
+.destroy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;

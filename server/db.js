@@ -103,4 +103,15 @@ async function uploadImage(file) {
   return data.publicUrl;
 }
 
-module.exports = { initDb, getDb, ensureRoom, getMessages, saveMessage, uploadImage };
+async function destroyRoom(roomCode) {
+  if (!supabase) return true;
+
+  const { error } = await supabase.from('rooms').delete().eq('code', roomCode);
+  if (error) {
+    console.error('방 삭제 실패:', error.message);
+    return false;
+  }
+  return true;
+}
+
+module.exports = { initDb, getDb, ensureRoom, getMessages, saveMessage, uploadImage, destroyRoom };

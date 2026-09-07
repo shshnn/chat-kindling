@@ -87,6 +87,7 @@ export default function App() {
       rooms={rooms}
       onSwitchRoom={handleSwitchRoom}
       onLeave={handleLeaveCurrent}
+      onDestroy={handleLeaveCurrent}
       onFriendName={handleFriendName}
     />
   );

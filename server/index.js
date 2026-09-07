@@ -8,7 +8,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const { initDb, ensureRoom, getMessages, saveMessage, uploadImage, getDb } = require('./db');
+const { initDb, ensureRoom, getMessages, saveMessage, uploadImage, getDb, destroyRoom } = require('./db');
 
 const app = express();
 const server = http.createServer(app);
@@ -139,6 +139,25 @@ io.on('connection', (socket) => {
   socket.on('typing', ({ isTyping }) => {
     if (!currentRoom) return;
     socket.to(currentRoom).emit('user-typing', { name: userName, isTyping });
+  });
+
+  socket.on('destroy-room', async () => {
+    if (!currentRoom) return;
+
+    const roomCode = currentRoom;
+    const ok = await destroyRoom(roomCode);
+    if (!ok) {
+      socket.emit('destroy-error', { message: '방 폭파에 실패했어요' });
+      return;
+    }
+
+    io.to(roomCode).emit('room-destroyed', {
+      roomCode,
+      by: userName,
+    });
+
+    activeRooms.delete(roomCode);
+    currentRoom = null;
   });
 
   socket.on('disconnect', () => {
