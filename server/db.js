@@ -2,17 +2,44 @@ const { createClient } = require('@supabase/supabase-js');
 
 let supabase = null;
 
+function cleanEnv(value) {
+  if (!value) return '';
+  return String(value).trim().replace(/^["']|["']$/g, '');
+}
+
 function initDb() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = cleanEnv(process.env.SUPABASE_URL);
+  const key = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   if (!url || !key) {
-    console.warn('⚠️  SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 없음 — 메모리 모드로 실행');
+    console.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 없음 — 메모리 모드');
     return null;
   }
 
-  supabase = createClient(url, key);
-  return supabase;
+  if (!/^https?:\/\//i.test(url)) {
+    console.error('SUPABASE_URL 형식 오류 (https://... 이어야 함):', url.slice(0, 40));
+    return null;
+  }
+
+  try {
+    supabase = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+      realtime: {
+        // 서버에서는 Realtime 미사용 — 연결 초기화 실패로 프로세스 죽지 않게
+        timeout: 1000,
+      },
+    });
+    console.log('Supabase 클라이언트 준비됨');
+    return supabase;
+  } catch (err) {
+    console.error('Supabase 초기화 실패 — 메모리 모드로 계속:', err.message);
+    supabase = null;
+    return null;
+  }
 }
 
 function getDb() {
