@@ -7,9 +7,10 @@
 
 ## 기능
 
+- 아이디 / 비밀번호 가입·로그인
+- 계정에 참여 중인 방 저장 (기기 바꿔도 이어서)
 - 실시간 텍스트 채팅 + 사진 전송
-- 방당 2명 제한
-- 채팅 기록 영구 저장 (DB)
+- 방당 2명 제한 · 방 폭파
 - PWA — 폰 홈 화면에 앱처럼 설치 가능
 
 ---
@@ -17,7 +18,8 @@
 ## 1단계: Supabase 설정 (무료)
 
 1. [supabase.com](https://supabase.com) 가입 → **New Project** 생성
-2. **SQL Editor** → `supabase/schema.sql` 내용 붙여넣고 실행
+2. **SQL Editor** → `supabase/schema.sql` 전체 붙여넣고 실행  
+   (이미 rooms/messages만 만든 경우에도 전체 다시 실행 가능 — `IF NOT EXISTS`)
 3. **Storage** → **New bucket**
    - 이름: `chat-images`
    - **Public bucket** 체크 ✅
@@ -25,6 +27,7 @@
    - `Project URL` → `SUPABASE_URL`
    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`  
      ⚠️ service_role 키는 절대 프론트엔드/깃허브에 올리지 마세요
+5. Render 환경변수에 `JWT_SECRET`도 추가 (긴 랜덤 문자열)
 
 ---
 

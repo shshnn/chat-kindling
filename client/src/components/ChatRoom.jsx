@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import MessageBubble from './MessageBubble';
-import { roomLabel } from '../roomsStorage';
+import { roomLabel } from '../api';
 import './ChatRoom.css';
 
-function getUserId() {
+function getUserId(accountId) {
+  if (accountId) return accountId;
   let id = localStorage.getItem('kindling_user_id');
   if (!id) {
     id = crypto.randomUUID();
@@ -14,6 +15,7 @@ function getUserId() {
 }
 
 export default function ChatRoom({
+  accountId,
   name,
   roomCode,
   rooms,
@@ -36,7 +38,8 @@ export default function ChatRoom({
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const userIdRef = useRef(getUserId());
+  const userIdRef = useRef(getUserId(accountId));
+  userIdRef.current = getUserId(accountId);
   const onFriendNameRef = useRef(onFriendName);
   onFriendNameRef.current = onFriendName;
   const onDestroyRef = useRef(onDestroy);

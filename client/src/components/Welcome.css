@@ -27,15 +27,47 @@
 .b4 { bottom: 15%; right: 15%; animation-delay: 1.5s; }
 .b5 { top: 45%; left: 5%; animation-delay: 2s; font-size: 20px; }
 
+.welcome-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.welcome-user {
+  font-size: 13px;
+  color: var(--mint-dark);
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: var(--mint-light);
+  border: none;
+  color: var(--mint-dark);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.empty-rooms {
+  font-size: 13px;
+  color: var(--text-light);
+  text-align: center;
+  padding: 8px;
+  background: var(--mint-light);
+  border-radius: 12px;
+}
+
 .welcome-back {
-  align-self: flex-start;
   background: none;
   border: none;
   color: var(--mint-dark);
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
-  margin-bottom: 8px;
   padding: 4px 0;
 }
 
@@ -52,18 +84,26 @@
 
 .existing-select {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 18px;
   border: 2px solid var(--mint-light);
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 16px;
   font-family: inherit;
   color: var(--text);
   background: var(--white);
   outline: none;
+  transition: border-color 0.2s;
 }
 
 .existing-select:focus {
   border-color: var(--mint);
+}
+
+.or-divider {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light);
+  margin: -4px 0;
 }
 
 .welcome-card {

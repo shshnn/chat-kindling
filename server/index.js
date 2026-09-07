@@ -9,6 +9,16 @@ const cors = require('cors');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { initDb, ensureRoom, getMessages, saveMessage, uploadImage, getDb, destroyRoom } = require('./db');
+const {
+  authMiddleware,
+  register,
+  login,
+  listUserRooms,
+  joinUserRoom,
+  updateUserRoomFriend,
+  leaveUserRoom,
+  clearRoomMemberships,
+} = require('./auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -51,6 +61,79 @@ function getActiveRoom(roomCode) {
   return activeRooms.get(roomCode);
 }
 
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, db: !!getDb() });
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    const result = await register(username, password);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    const result = await login(username, password);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/me', authMiddleware, (req, res) => {
+  res.json({ user: req.user });
+});
+
+app.get('/api/me/rooms', authMiddleware, async (req, res) => {
+  try {
+    const rooms = await listUserRooms(req.user.id);
+    res.json({ rooms });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/me/rooms', authMiddleware, async (req, res) => {
+  try {
+    const { roomCode, displayName, friendName } = req.body || {};
+    if (!roomCode || !displayName) {
+      return res.status(400).json({ error: '방 코드와 이름이 필요해요' });
+    }
+    const rooms = await joinUserRoom(req.user.id, {
+      roomCode,
+      displayName,
+      friendName,
+    });
+    res.json({ rooms });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.patch('/api/me/rooms/:code', authMiddleware, async (req, res) => {
+  try {
+    await updateUserRoomFriend(req.user.id, req.params.code, req.body?.friendName);
+    const rooms = await listUserRooms(req.user.id);
+    res.json({ rooms });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/me/rooms/:code', authMiddleware, async (req, res) => {
+  try {
+    const rooms = await leaveUserRoom(req.user.id, req.params.code);
+    res.json({ rooms });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '파일이 없어요' });
 
@@ -68,10 +151,6 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, db: !!getDb() });
 });
 
 io.on('connection', (socket) => {
@@ -94,6 +173,7 @@ io.on('connection', (socket) => {
       room.users.push({ socketId: socket.id, name, userId: clientUserId });
     } else {
       existing.socketId = socket.id;
+      existing.name = name;
     }
 
     currentRoom = roomCode;
@@ -145,6 +225,7 @@ io.on('connection', (socket) => {
     if (!currentRoom) return;
 
     const roomCode = currentRoom;
+    await clearRoomMemberships(roomCode);
     const ok = await destroyRoom(roomCode);
     if (!ok) {
       socket.emit('destroy-error', { message: '방 폭파에 실패했어요' });
