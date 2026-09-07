@@ -155,15 +155,31 @@ io.on('connection', (socket) => {
 });
 
 if (isProd) {
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io') || req.path.startsWith('/uploads')) {
+  const indexHtml = path.join(__dirname, '../client/dist/index.html');
+  app.use((req, res, next) => {
+    if (
+      req.method !== 'GET' ||
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/socket.io') ||
+      req.path.startsWith('/uploads')
+    ) {
       return next();
     }
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    if (!fs.existsSync(indexHtml)) {
+      return res.status(500).send('client/dist 없음 — 빌드를 확인하세요');
+    }
+    res.sendFile(indexHtml);
   });
 }
 
-server.listen(PORT, () => {
-  console.log(`Kindling 서버 실행: http://localhost:${PORT} (${isProd ? 'production' : 'dev'})`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Kindling 서버 실행: port ${PORT} (${isProd ? 'production' : 'dev'})`);
   console.log(`DB: ${getDb() ? 'Supabase 연결됨' : '메모리 모드'}`);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('unhandledRejection:', err);
 });
