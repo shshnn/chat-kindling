@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon-512.png'],
       manifest: {
         name: 'Kindling',
         short_name: 'Kindling',
@@ -19,21 +19,26 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icon.svg',
+            src: '/icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/icon.svg',
+            src: '/icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'maskable',
+          },
+          {
+            src: '/apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
           },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
