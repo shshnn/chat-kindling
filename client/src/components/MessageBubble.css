@@ -1,0 +1,96 @@
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  animation: pop 0.3s ease;
+}
+
+.message-row.mine {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sage), var(--sky));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+.message-row.mine .bubble-wrap {
+  align-items: flex-end;
+}
+
+.sender-name {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.bubble {
+  padding: 10px 16px;
+  border-radius: 20px;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.bubble-theirs {
+  background: var(--white);
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.bubble-mine {
+  background: linear-gradient(135deg, var(--mint-dark), var(--sky-dark));
+  color: white;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 2px 12px rgba(107, 158, 143, 0.25);
+}
+
+.bubble-text {
+  font-size: 15px;
+  white-space: pre-wrap;
+}
+
+.bubble-image {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.2s;
+  object-fit: cover;
+}
+
+.bubble-image:hover {
+  transform: scale(1.02);
+}
+
+.bubble:has(.bubble-image) {
+  padding: 4px;
+  overflow: hidden;
+}
+
+.bubble:has(.bubble-image) .bubble-text {
+  padding: 8px 12px 4px;
+}
+
+.bubble-time {
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 4px;
+  padding: 0 4px;
+}
