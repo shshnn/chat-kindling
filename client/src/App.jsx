@@ -1,51 +1,93 @@
 import { useState } from 'react';
 import Welcome from './components/Welcome';
 import ChatRoom from './components/ChatRoom';
-
-const SESSION_KEY = 'kindling_session';
-
-function loadSession() {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (data?.name && data?.roomCode) return data;
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
-function saveSession(session) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-}
-
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-}
+import {
+  loadRooms,
+  getActiveRoomCode,
+  setActiveRoomCode,
+  upsertRoom,
+  removeRoom,
+  updateFriendName,
+} from './roomsStorage';
 
 export default function App() {
-  const [session, setSession] = useState(loadSession);
+  const [rooms, setRooms] = useState(loadRooms);
+  const [activeRoomCode, setActive] = useState(() => {
+    const roomsNow = loadRooms();
+    const saved = getActiveRoomCode();
+    if (saved && roomsNow.some((r) => r.roomCode === saved)) return saved;
+    return roomsNow[0]?.roomCode || null;
+  });
+  const [showWelcome, setShowWelcome] = useState(() => loadRooms().length === 0);
+
+  const activeRoom = rooms.find((r) => r.roomCode === activeRoomCode) || null;
 
   function handleJoin(next) {
-    saveSession(next);
-    setSession(next);
+    const updated = upsertRoom(rooms, next);
+    setRooms(updated);
+    setActive(next.roomCode.toUpperCase());
+    setShowWelcome(false);
   }
 
-  function handleLeave() {
-    clearSession();
-    setSession(null);
+  function handleSwitchRoom(code) {
+    if (code === '__new__') {
+      setShowWelcome(true);
+      return;
+    }
+    setActiveRoomCode(code);
+    setActive(code);
+    setShowWelcome(false);
   }
 
-  if (!session) {
-    return <Welcome onJoin={handleJoin} />;
+  function handleLeaveCurrent() {
+    if (!activeRoom) {
+      setShowWelcome(true);
+      return;
+    }
+    const updated = removeRoom(rooms, activeRoom.roomCode);
+    setRooms(updated);
+    if (updated.length === 0) {
+      setActive(null);
+      setShowWelcome(true);
+    } else {
+      setActive(updated[0].roomCode);
+      setShowWelcome(false);
+    }
+  }
+
+  function handleFriendName(friendName) {
+    if (!activeRoom) return;
+    const updated = updateFriendName(rooms, activeRoom.roomCode, friendName);
+    setRooms(updated);
+  }
+
+  if (showWelcome || !activeRoom) {
+    return (
+      <Welcome
+        onJoin={handleJoin}
+        rooms={rooms}
+        onSelectRoom={(code) => handleSwitchRoom(code)}
+        onBack={
+          rooms.length > 0
+            ? () => {
+                setActive(getActiveRoomCode() || rooms[0].roomCode);
+                setShowWelcome(false);
+              }
+            : null
+        }
+      />
+    );
   }
 
   return (
     <ChatRoom
-      name={session.name}
-      roomCode={session.roomCode}
-      onLeave={handleLeave}
+      key={activeRoom.roomCode}
+      name={activeRoom.name}
+      roomCode={activeRoom.roomCode}
+      rooms={rooms}
+      onSwitchRoom={handleSwitchRoom}
+      onLeave={handleLeaveCurrent}
+      onFriendName={handleFriendName}
     />
   );
 }

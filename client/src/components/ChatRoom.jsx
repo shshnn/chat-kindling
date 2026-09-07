@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import MessageBubble from './MessageBubble';
+import { roomLabel } from '../roomsStorage';
 import './ChatRoom.css';
 
 function getUserId() {
@@ -12,7 +13,14 @@ function getUserId() {
   return id;
 }
 
-export default function ChatRoom({ name, roomCode, onLeave }) {
+export default function ChatRoom({
+  name,
+  roomCode,
+  rooms,
+  onSwitchRoom,
+  onLeave,
+  onFriendName,
+}) {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [myUserId, setMyUserId] = useState(null);
@@ -28,12 +36,21 @@ export default function ChatRoom({ name, roomCode, onLeave }) {
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const userIdRef = useRef(getUserId());
+  const onFriendNameRef = useRef(onFriendName);
+  onFriendNameRef.current = onFriendName;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
+    setMessages([]);
+    setUsers([]);
+    setConnected(false);
+    setError(null);
+    setTypingUser(null);
+    setInput('');
+
     const socket = io('/', { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
@@ -49,6 +66,8 @@ export default function ChatRoom({ name, roomCode, onLeave }) {
       setMyUserId(uid);
       setConnected(true);
       setError(null);
+      const friend = roomUsers.find((u) => u.userId !== uid);
+      onFriendNameRef.current?.(friend?.name || null);
     });
 
     socket.on('join-error', ({ message }) => {
@@ -61,10 +80,14 @@ export default function ChatRoom({ name, roomCode, onLeave }) {
 
     socket.on('user-joined', ({ users: roomUsers }) => {
       setUsers(roomUsers);
+      const friend = roomUsers.find((u) => u.userId !== userIdRef.current);
+      onFriendNameRef.current?.(friend?.name || null);
     });
 
     socket.on('user-left', ({ users: roomUsers }) => {
       setUsers(roomUsers);
+      const friend = roomUsers.find((u) => u.userId !== userIdRef.current);
+      onFriendNameRef.current?.(friend?.name || null);
     });
 
     socket.on('user-typing', ({ name: typingName, isTyping }) => {
@@ -130,7 +153,7 @@ export default function ChatRoom({ name, roomCode, onLeave }) {
         <div className="error-card">
           <span className="error-emoji">😢</span>
           <p>{error}</p>
-          <button onClick={onLeave} className="back-btn cute-font">돌아가기</button>
+          <button onClick={onLeave} className="back-btn cute-font">이 방 나가기</button>
         </div>
       </div>
     );
@@ -139,17 +162,29 @@ export default function ChatRoom({ name, roomCode, onLeave }) {
   return (
     <div className="chat-room">
       <header className="chat-header">
-        <button className="back-icon" onClick={onLeave} aria-label="나가기">
+        <button className="back-icon" onClick={onLeave} aria-label="이 방 나가기" title="이 방 나가기">
           ←
         </button>
         <div className="header-info">
-          <h2 className="cute-font friend-name">
-            {friend ? friend.name : '친구 기다리는 중...'}
-          </h2>
+          <select
+            className="room-select"
+            value={roomCode}
+            onChange={(e) => onSwitchRoom(e.target.value)}
+            aria-label="대화방 선택"
+          >
+            {rooms.map((room) => (
+              <option key={room.roomCode} value={room.roomCode}>
+                {roomLabel(room)}
+              </option>
+            ))}
+            <option value="__new__">＋ 새 대화 시작</option>
+          </select>
           <div className="header-status">
             <span className={`status-dot ${isWaiting ? 'waiting' : 'online'}`} />
             <span className="status-text">
-              {isWaiting ? '친구를 기다리고 있어요' : '함께하는 중 ✨'}
+              {isWaiting
+                ? '친구를 기다리고 있어요'
+                : `${friend?.name || '친구'}와 함께하는 중`}
             </span>
           </div>
         </div>

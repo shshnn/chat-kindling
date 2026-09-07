@@ -27,6 +27,45 @@
 .b4 { bottom: 15%; right: 15%; animation-delay: 1.5s; }
 .b5 { top: 45%; left: 5%; animation-delay: 2s; font-size: 20px; }
 
+.welcome-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--mint-dark);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.existing-rooms {
+  margin-bottom: 20px;
+}
+
+.existing-label {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.existing-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+}
+
+.existing-select:focus {
+  border-color: var(--mint);
+}
+
 .welcome-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
