@@ -1,13 +1,17 @@
 services:
   - type: web
-    name: kindling
+    name: chat-kindling
     runtime: node
     plan: free
-    buildCommand: npm run install:all && npm run build
-    startCommand: npm start
+    region: oregon
+    buildCommand: npm install && cd client && npm install && npm run build
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
