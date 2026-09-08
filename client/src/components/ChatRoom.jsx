@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import MessageBubble from './MessageBubble';
-import { roomLabel } from '../api';
+import { roomLabel, uploadImageApi } from '../api';
 import { showLocalNotification } from '../notifications';
 import './ChatRoom.css';
 import './Social.css';
@@ -116,9 +116,13 @@ export default function ChatRoom({
 
     socket.on('warmth-up', ({ degrees }) => {
       setWarmth(degrees);
-      setWarmthToast(`🔥 1도 올랐어요! 지금 ${degrees}°`);
+      setWarmthToast(`🔥 오늘 친밀온도 1도 올랐어요! 지금 ${degrees}°`);
       clearTimeout(socket._warmthToastTimer);
-      socket._warmthToastTimer = setTimeout(() => setWarmthToast(null), 2200);
+      socket._warmthToastTimer = setTimeout(() => setWarmthToast(null), 2500);
+    });
+
+    socket.on('warmth-sync', ({ degrees }) => {
+      if (typeof degrees === 'number') setWarmth(degrees);
     });
 
     socket.on('room-destroyed', ({ by }) => {
@@ -178,17 +182,14 @@ export default function ChatRoom({
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+      const data = await uploadImageApi(file);
       if (data.url) {
         sendMessage('', data.url);
       } else {
-        alert(data.error || '사진 업로드에 실패했어요');
+        alert('사진 업로드에 실패했어요');
       }
-    } catch {
-      alert('사진 업로드에 실패했어요');
+    } catch (err) {
+      alert(err.message || '사진 업로드에 실패했어요');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

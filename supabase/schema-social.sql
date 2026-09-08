@@ -66,3 +66,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
 
+-- 친밀온도: 하루 1회만 상승
+ALTER TABLE warmth ADD COLUMN IF NOT EXISTS last_bump_date DATE;
+
+

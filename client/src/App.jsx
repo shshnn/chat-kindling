@@ -67,11 +67,24 @@ export default function App() {
         const { rooms: list } = await fetchMyRooms();
         if (cancelled) return;
         setRooms(list);
-        const saved = getActiveRoomCode();
-        if (saved && list.some((r) => r.roomCode === saved)) {
-          setActive(saved);
+
+        const savedRaw = getActiveRoomCode();
+        const saved = savedRaw ? savedRaw.toUpperCase() : null;
+        const matched = saved && list.find((r) => r.roomCode.toUpperCase() === saved);
+
+        if (matched) {
+          setActiveRoomCode(matched.roomCode);
+          setActive(matched.roomCode);
           setShowHome(false);
+        } else if (list.length > 0) {
+          // 저장된 방이 없어도 참여 중인 방이 있으면 홈에서 고를 수 있게 유지
+          setShowHome(true);
+          if (saved && !matched) {
+            setActiveRoomCode(null);
+            setActive(null);
+          }
         } else {
+          setActiveRoomCode(null);
           setActive(null);
           setShowHome(true);
         }
@@ -93,7 +106,10 @@ export default function App() {
     };
   }, [user]);
 
-  const activeRoom = rooms.find((r) => r.roomCode === activeRoomCode) || null;
+  const activeRoom =
+    rooms.find((r) => r.roomCode === activeRoomCode) ||
+    rooms.find((r) => r.roomCode?.toUpperCase() === activeRoomCode?.toUpperCase()) ||
+    null;
 
   async function handleJoin({ name, roomCode }) {
     const { rooms: list } = await joinRoomApi({
@@ -109,8 +125,11 @@ export default function App() {
   }
 
   function handleSelectRoom(code) {
-    setActiveRoomCode(code);
-    setActive(code);
+    const normalized = String(code).toUpperCase();
+    const found = rooms.find((r) => r.roomCode.toUpperCase() === normalized);
+    const roomCode = found?.roomCode || normalized;
+    setActiveRoomCode(roomCode);
+    setActive(roomCode);
     setShowHome(false);
     setTab('chat');
   }
@@ -264,7 +283,17 @@ export default function App() {
         <button
           type="button"
           className={tab === 'chat' ? 'active' : ''}
-          onClick={() => setTab('chat')}
+          onClick={() => {
+            setTab('chat');
+            if (!activeRoom && rooms.length > 0) {
+              const saved = getActiveRoomCode();
+              const match = rooms.find(
+                (r) => r.roomCode.toUpperCase() === String(saved || '').toUpperCase()
+              );
+              if (match) handleSelectRoom(match.roomCode);
+              else setShowHome(true);
+            }
+          }}
         >
           💬 채팅
         </button>

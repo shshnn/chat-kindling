@@ -117,8 +117,8 @@ async function uploadImage(file) {
   const { error } = await supabase.storage
     .from('chat-images')
     .upload(filename, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false,
+      contentType: file.mimetype || 'image/jpeg',
+      upsert: true,
     });
 
   if (error) {

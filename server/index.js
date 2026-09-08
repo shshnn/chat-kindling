@@ -60,10 +60,14 @@ if (isProd) {
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('이미지만 업로드 가능해요'));
+    const type = file.mimetype || '';
+    if (type.startsWith('image/') || type === 'application/octet-stream' || !type) {
+      cb(null, true);
+    } else {
+      cb(new Error('이미지만 업로드 가능해요'));
+    }
   },
 });
 
@@ -245,18 +249,25 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '파일이 없어요' });
 
   try {
+    let url = null;
     if (getDb()) {
-      const url = await uploadImage(req.file);
-      if (!url) return res.status(500).json({ error: '업로드 실패' });
-      return res.json({ url });
+      try {
+        url = await uploadImage(req.file);
+      } catch (err) {
+        console.error('Supabase 업로드 예외:', err.message);
+      }
     }
 
-    const ext = path.extname(req.file.originalname) || '.jpg';
-    const filename = `${uuidv4()}${ext}`;
-    fs.writeFileSync(path.join(UPLOAD_DIR, filename), req.file.buffer);
-    res.json({ url: `/uploads/${filename}` });
+    if (!url) {
+      const ext = path.extname(req.file.originalname) || '.jpg';
+      const filename = `${uuidv4()}${ext}`;
+      fs.writeFileSync(path.join(UPLOAD_DIR, filename), req.file.buffer);
+      url = `/uploads/${filename}`;
+    }
+
+    res.json({ url });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || '업로드 실패' });
   }
 });
 
@@ -349,9 +360,11 @@ io.on('connection', (socket) => {
     const room = getActiveRoom(currentRoom);
     if (room.users.length === 2) {
       const ids = room.users.map((u) => u.userId);
-      const degrees = await bumpWarmth(ids[0], ids[1]);
-      if (degrees != null) {
-        io.to(currentRoom).emit('warmth-up', { degrees });
+      const result = await bumpWarmth(ids[0], ids[1]);
+      if (result?.bumped) {
+        io.to(currentRoom).emit('warmth-up', { degrees: result.degrees });
+      } else if (result && typeof result.degrees === 'number') {
+        io.to(currentRoom).emit('warmth-sync', { degrees: result.degrees });
       }
     }
   });

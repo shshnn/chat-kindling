@@ -226,14 +226,40 @@ async function bumpWarmth(a, b) {
   if (!uuidRe.test(a) || !uuidRe.test(b) || a === b) return null;
 
   const [user_a, user_b] = pair(a, b);
-  const current = await getWarmthBetween(a, b);
-  const degrees = current + 1;
 
+  const { data: fr } = await db
+    .from('friendships')
+    .select('status')
+    .eq('user_a', user_a)
+    .eq('user_b', user_b)
+    .maybeSingle();
+
+  if (!fr || fr.status !== 'accepted') {
+    const degrees = await getWarmthBetween(a, b);
+    return { degrees, bumped: false };
+  }
+
+  const todayKst = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const { data: row } = await db
+    .from('warmth')
+    .select('degrees, last_bump_date')
+    .eq('user_a', user_a)
+    .eq('user_b', user_b)
+    .maybeSingle();
+
+  const current = row?.degrees || 0;
+  if (row?.last_bump_date === todayKst) {
+    return { degrees: current, bumped: false };
+  }
+
+  const degrees = current + 1;
   const { error } = await db.from('warmth').upsert(
     {
       user_a,
       user_b,
       degrees,
+      last_bump_date: todayKst,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_a,user_b' }
@@ -242,7 +268,7 @@ async function bumpWarmth(a, b) {
     console.error('온도 상승 실패:', error.message);
     return null;
   }
-  return degrees;
+  return { degrees, bumped: true };
 }
 
 async function openFriendChat(myId, friendId, myDisplayName) {
