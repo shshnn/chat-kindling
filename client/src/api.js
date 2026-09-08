@@ -87,3 +87,56 @@ export function roomLabel(room) {
   const who = room.friendName || '대기 중';
   return `${who} · ${room.roomCode}`;
 }
+
+export function fetchFriends() {
+  return api('/api/friends');
+}
+
+export function requestFriendApi(username) {
+  return api('/api/friends/request', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  });
+}
+
+export function respondFriendApi(friendId, accept) {
+  return api('/api/friends/respond', {
+    method: 'POST',
+    body: JSON.stringify({ friendId, accept }),
+  });
+}
+
+export function openFriendChatApi(friendId, displayName) {
+  return api('/api/friends/chat', {
+    method: 'POST',
+    body: JSON.stringify({ friendId, displayName }),
+  });
+}
+
+export function fetchFeed() {
+  return api('/api/feed');
+}
+
+export function createPostApi({ text, imageUrl }) {
+  return api('/api/feed', {
+    method: 'POST',
+    body: JSON.stringify({ text, imageUrl }),
+  });
+}
+
+export function likePostApi(postId) {
+  return api(`/api/feed/${postId}/like`, { method: 'POST' });
+}
+
+export function commentPostApi(postId, text) {
+  return api(`/api/feed/${postId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+}
+
+export async function uploadImageApi(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  return api('/api/upload', { method: 'POST', body: formData });
+}

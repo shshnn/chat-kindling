@@ -41,3 +41,5 @@ CREATE INDEX IF NOT EXISTS idx_user_rooms_user ON user_rooms(user_id, updated_at
 -- Storage: Dashboard → Storage → New bucket
 -- 버킷 이름: chat-images
 -- Public bucket: ON (체크)
+
+-- 친구/피드 테이블은 schema-social.sql 도 실행하세요

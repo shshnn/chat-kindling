@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import Auth from './components/Auth';
 import Welcome from './components/Welcome';
 import ChatRoom from './components/ChatRoom';
+import Friends from './components/Friends';
+import Feed from './components/Feed';
+import './components/Social.css';
 import {
   getToken,
   getUser,
@@ -21,6 +24,7 @@ export default function App() {
   const [activeRoomCode, setActive] = useState(null);
   const [showHome, setShowHome] = useState(true);
   const [bootError, setBootError] = useState('');
+  const [tab, setTab] = useState('chat');
 
   useEffect(() => {
     if (!user) return;
@@ -71,12 +75,14 @@ export default function App() {
     setActiveRoomCode(code);
     setActive(code);
     setShowHome(false);
+    setTab('chat');
   }
 
   function handleSelectRoom(code) {
     setActiveRoomCode(code);
     setActive(code);
     setShowHome(false);
+    setTab('chat');
   }
 
   function handleSwitchRoom(code) {
@@ -110,7 +116,6 @@ export default function App() {
   }
 
   async function handleDestroy() {
-    // 서버에서 방/멤버십 삭제됨 → 목록 다시 불러오기
     try {
       const { rooms: list } = await fetchMyRooms();
       setRooms(list);
@@ -147,6 +152,15 @@ export default function App() {
     setRooms([]);
     setActive(null);
     setShowHome(true);
+    setTab('chat');
+  }
+
+  function handleFriendOpenChat({ roomCode, rooms: list }) {
+    setRooms(list);
+    setActiveRoomCode(roomCode);
+    setActive(roomCode);
+    setShowHome(false);
+    setTab('chat');
   }
 
   if (!user) {
@@ -172,8 +186,13 @@ export default function App() {
     );
   }
 
-  if (showHome || !activeRoom) {
-    return (
+  let body = null;
+  if (tab === 'friends') {
+    body = <Friends user={user} onOpenChat={handleFriendOpenChat} />;
+  } else if (tab === 'feed') {
+    body = <Feed />;
+  } else if (showHome || !activeRoom) {
+    body = (
       <Welcome
         user={user}
         rooms={rooms}
@@ -192,19 +211,48 @@ export default function App() {
         onLogout={handleLogout}
       />
     );
+  } else {
+    body = (
+      <ChatRoom
+        key={activeRoom.roomCode}
+        accountId={user.id}
+        name={activeRoom.name}
+        roomCode={activeRoom.roomCode}
+        rooms={rooms}
+        onSwitchRoom={handleSwitchRoom}
+        onLeave={handleLeaveCurrent}
+        onDestroy={handleDestroy}
+        onFriendName={handleFriendName}
+      />
+    );
   }
 
   return (
-    <ChatRoom
-      key={activeRoom.roomCode}
-      accountId={user.id}
-      name={activeRoom.name}
-      roomCode={activeRoom.roomCode}
-      rooms={rooms}
-      onSwitchRoom={handleSwitchRoom}
-      onLeave={handleLeaveCurrent}
-      onDestroy={handleDestroy}
-      onFriendName={handleFriendName}
-    />
+    <div className="app-shell">
+      <div className="app-shell-body">{body}</div>
+      <nav className="tab-bar">
+        <button
+          type="button"
+          className={tab === 'chat' ? 'active' : ''}
+          onClick={() => setTab('chat')}
+        >
+          💬 채팅
+        </button>
+        <button
+          type="button"
+          className={tab === 'friends' ? 'active' : ''}
+          onClick={() => setTab('friends')}
+        >
+          🤝 친구
+        </button>
+        <button
+          type="button"
+          className={tab === 'feed' ? 'active' : ''}
+          onClick={() => setTab('feed')}
+        >
+          ☀️ 피드
+        </button>
+      </nav>
+    </div>
   );
 }

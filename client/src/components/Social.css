@@ -1,0 +1,239 @@
+.social-panel {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow-y: auto;
+  padding: 16px 16px 88px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.social-title {
+  font-size: 28px;
+  color: var(--mint-dark);
+  margin-bottom: 16px;
+}
+
+.social-section {
+  margin-top: 20px;
+}
+
+.social-section h3 {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+.friend-request-form {
+  display: flex;
+  gap: 8px;
+}
+
+.friend-request-form input,
+.compose-card textarea,
+.comment-row input {
+  flex: 1;
+  border: 2px solid var(--mint-light);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  outline: none;
+  background: #fff;
+}
+
+.friend-request-form button,
+.friend-actions button,
+.compose-actions button,
+.comment-row button,
+.friend-row > button {
+  border: none;
+  background: var(--mint-dark);
+  color: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.friend-actions .ghost,
+.compose-actions button:not(.primary) {
+  background: var(--mint-light);
+  color: var(--mint-dark);
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mint-light);
+}
+
+.friend-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.temp-badge {
+  font-size: 12px;
+  color: #c17a3a;
+  margin-top: 2px;
+}
+
+.muted {
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.compose-card,
+.feed-card {
+  background: #fff;
+  border: 1px solid var(--mint-light);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.compose-card textarea {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.compose-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.compose-preview {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.compose-preview img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.compose-preview button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.5);
+  color: white;
+}
+
+.feed-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feed-text {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.feed-image {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  object-fit: cover;
+  max-height: 360px;
+}
+
+.feed-actions {
+  margin-bottom: 8px;
+}
+
+.feed-actions button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.feed-comment {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.comment-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.app-shell {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.app-shell-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-bar {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid var(--mint-light);
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.tab-bar button {
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--text-light);
+  padding: 8px 4px;
+  cursor: pointer;
+}
+
+.tab-bar button.active {
+  color: var(--mint-dark);
+  font-weight: 700;
+}
+
+.warmth-toast {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: #fff8e8;
+  border: 2px solid #f0c987;
+  color: #9a5b20;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-family: 'Gaegu', cursive;
+  font-size: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  animation: pop 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.warmth-badge {
+  font-size: 12px;
+  color: #c17a3a;
+  font-weight: 600;
+}

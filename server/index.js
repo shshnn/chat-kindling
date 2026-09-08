@@ -19,6 +19,18 @@ const {
   leaveUserRoom,
   clearRoomMemberships,
 } = require('./auth');
+const {
+  requestFriend,
+  respondFriend,
+  listFriends,
+  bumpWarmth,
+  getWarmthBetween,
+  openFriendChat,
+  listFeed,
+  createPost,
+  toggleLike,
+  addComment,
+} = require('./social');
 
 const app = express();
 const server = http.createServer(app);
@@ -134,6 +146,77 @@ app.delete('/api/me/rooms/:code', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/api/friends', authMiddleware, async (req, res) => {
+  try {
+    res.json(await listFriends(req.user.id));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/friends/request', authMiddleware, async (req, res) => {
+  try {
+    res.json(await requestFriend(req.user.id, req.body?.username));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/friends/respond', authMiddleware, async (req, res) => {
+  try {
+    const { friendId, accept } = req.body || {};
+    res.json(await respondFriend(req.user.id, friendId, !!accept));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/friends/chat', authMiddleware, async (req, res) => {
+  try {
+    const { friendId, displayName } = req.body || {};
+    res.json(await openFriendChat(req.user.id, friendId, displayName));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/feed', authMiddleware, async (req, res) => {
+  try {
+    res.json({ posts: await listFeed(req.user.id) });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/feed', authMiddleware, async (req, res) => {
+  try {
+    const post = await createPost(req.user.id, {
+      text: req.body?.text,
+      imageUrl: req.body?.imageUrl,
+    });
+    res.json({ post });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/feed/:id/like', authMiddleware, async (req, res) => {
+  try {
+    res.json(await toggleLike(req.user.id, req.params.id));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/feed/:id/comments', authMiddleware, async (req, res) => {
+  try {
+    const comment = await addComment(req.user.id, req.params.id, req.body?.text);
+    res.json({ comment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '파일이 없어요' });
 
@@ -183,15 +266,23 @@ io.on('connection', (socket) => {
 
     const history = getDb() ? await getMessages(roomCode) : [];
 
+    let warmth = null;
+    if (room.users.length === 2) {
+      const ids = room.users.map((u) => u.userId);
+      warmth = await getWarmthBetween(ids[0], ids[1]);
+    }
+
     socket.emit('join-success', {
       messages: history,
       users: room.users.map((u) => ({ name: u.name, userId: u.userId })),
       myUserId: clientUserId,
+      warmth,
     });
 
     socket.to(roomCode).emit('user-joined', {
       name,
       users: room.users.map((u) => ({ name: u.name, userId: u.userId })),
+      warmth,
     });
   });
 
@@ -214,6 +305,15 @@ io.on('connection', (socket) => {
     }
 
     io.to(currentRoom).emit('new-message', message);
+
+    const room = getActiveRoom(currentRoom);
+    if (room.users.length === 2) {
+      const ids = room.users.map((u) => u.userId);
+      const degrees = await bumpWarmth(ids[0], ids[1]);
+      if (degrees != null) {
+        io.to(currentRoom).emit('warmth-up', { degrees });
+      }
+    }
   });
 
   socket.on('typing', ({ isTyping }) => {

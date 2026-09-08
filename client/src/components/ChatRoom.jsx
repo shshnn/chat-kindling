@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import MessageBubble from './MessageBubble';
 import { roomLabel } from '../api';
 import './ChatRoom.css';
+import './Social.css';
 
 function getUserId(accountId) {
   if (accountId) return accountId;
@@ -33,6 +34,8 @@ export default function ChatRoom({
   const [connected, setConnected] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [warmth, setWarmth] = useState(null);
+  const [warmthToast, setWarmthToast] = useState(null);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -56,6 +59,8 @@ export default function ChatRoom({
     setError(null);
     setTypingUser(null);
     setInput('');
+    setWarmth(null);
+    setWarmthToast(null);
 
     const socket = io('/', { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
@@ -66,14 +71,15 @@ export default function ChatRoom({
       userId: userIdRef.current,
     });
 
-    socket.on('join-success', ({ messages: history, users: roomUsers, myUserId: uid }) => {
+    socket.on('join-success', ({ messages: history, users: roomUsers, myUserId: uid, warmth: w }) => {
       setMessages(history);
       setUsers(roomUsers);
       setMyUserId(uid);
       setConnected(true);
       setError(null);
-      const friend = roomUsers.find((u) => u.userId !== uid);
-      onFriendNameRef.current?.(friend?.name || null);
+      if (typeof w === 'number') setWarmth(w);
+      const friendUser = roomUsers.find((u) => u.userId !== uid);
+      onFriendNameRef.current?.(friendUser?.name || null);
     });
 
     socket.on('join-error', ({ message }) => {
@@ -84,20 +90,28 @@ export default function ChatRoom({
       setMessages((prev) => [...prev, msg]);
     });
 
-    socket.on('user-joined', ({ users: roomUsers }) => {
+    socket.on('user-joined', ({ users: roomUsers, warmth: w }) => {
       setUsers(roomUsers);
-      const friend = roomUsers.find((u) => u.userId !== userIdRef.current);
-      onFriendNameRef.current?.(friend?.name || null);
+      if (typeof w === 'number') setWarmth(w);
+      const friendUser = roomUsers.find((u) => u.userId !== userIdRef.current);
+      onFriendNameRef.current?.(friendUser?.name || null);
     });
 
     socket.on('user-left', ({ users: roomUsers }) => {
       setUsers(roomUsers);
-      const friend = roomUsers.find((u) => u.userId !== userIdRef.current);
-      onFriendNameRef.current?.(friend?.name || null);
+      const friendUser = roomUsers.find((u) => u.userId !== userIdRef.current);
+      onFriendNameRef.current?.(friendUser?.name || null);
     });
 
     socket.on('user-typing', ({ name: typingName, isTyping }) => {
       setTypingUser(isTyping ? typingName : null);
+    });
+
+    socket.on('warmth-up', ({ degrees }) => {
+      setWarmth(degrees);
+      setWarmthToast(`🔥 1도 올랐어요! 지금 ${degrees}°`);
+      clearTimeout(socket._warmthToastTimer);
+      socket._warmthToastTimer = setTimeout(() => setWarmthToast(null), 2200);
     });
 
     socket.on('room-destroyed', ({ by }) => {
@@ -113,7 +127,10 @@ export default function ChatRoom({
       alert(message || '방 폭파에 실패했어요');
     });
 
-    return () => socket.disconnect();
+    return () => {
+      clearTimeout(socket._warmthToastTimer);
+      socket.disconnect();
+    };
   }, [roomCode, name]);
 
   useEffect(() => {
@@ -188,6 +205,7 @@ export default function ChatRoom({
 
   return (
     <div className="chat-room">
+      {warmthToast && <div className="warmth-toast">{warmthToast}</div>}
       <header className="chat-header">
         <button className="back-icon" onClick={onLeave} aria-label="이 방 나가기" title="이 방 나가기">
           ←
@@ -213,6 +231,9 @@ export default function ChatRoom({
                 ? '친구를 기다리고 있어요'
                 : `${friend?.name || '친구'}와 함께하는 중`}
             </span>
+            {!isWaiting && warmth != null && (
+              <span className="warmth-badge"> · {warmth}°</span>
+            )}
           </div>
         </div>
         <div className="room-badge">{roomCode}</div>

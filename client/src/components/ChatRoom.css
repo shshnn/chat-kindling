@@ -4,8 +4,7 @@
   flex-direction: column;
   max-width: 480px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.92);
   position: relative;
 }
 
@@ -144,7 +143,8 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  isolation: isolate;
 }
 
 .waiting-banner {
