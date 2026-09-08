@@ -22,6 +22,13 @@
   --shadow: 0 4px 20px rgba(107, 158, 143, 0.12);
   --radius: 24px;
   --radius-sm: 16px;
+  --font: 17px;
+}
+
+html {
+  font-size: var(--font);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -36,9 +43,18 @@ body,
 
 body {
   font-family: 'Noto Sans KR', sans-serif;
+  font-size: 1rem;
+  line-height: 1.45;
   background: #ffffff;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font-size: 1rem;
 }
 
 .cute-font {
@@ -79,7 +95,7 @@ body {
   justify-content: center;
   gap: 16px;
   color: var(--text);
-  font-size: 18px;
+  font-size: 1.2rem;
   padding: 20px;
   text-align: center;
 }

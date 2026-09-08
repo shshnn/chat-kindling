@@ -7,17 +7,13 @@
 }
 
 .social-title {
-  font-size: 28px;
+  font-size: 2rem;
   color: var(--mint-dark);
   margin-bottom: 16px;
 }
 
-.social-section {
-  margin-top: 20px;
-}
-
 .social-section h3 {
-  font-size: 14px;
+  font-size: 1rem;
   color: var(--text-light);
   margin-bottom: 10px;
 }
@@ -238,19 +234,20 @@
   bottom: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   border-top: 1px solid var(--mint-light);
-  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  padding: 10px 6px calc(12px + env(safe-area-inset-bottom));
   z-index: 20;
 }
 
 .tab-bar button {
   border: none;
   background: none;
-  font: inherit;
+  font-size: 1rem;
   color: var(--text-light);
-  padding: 8px 4px;
+  padding: 12px 4px;
   cursor: pointer;
+  line-height: 1.35;
 }
 
 .tab-bar button.active {
