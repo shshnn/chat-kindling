@@ -45,3 +45,24 @@ CREATE TABLE IF NOT EXISTS post_comments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_post_comments ON post_comments(post_id, created_at);
+
+-- 서로 지정하는 애칭 (내가 상대에게 붙인 이름)
+CREATE TABLE IF NOT EXISTS friend_nicknames (
+  user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  friend_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  nickname TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, friend_id)
+);
+
+-- 푸시 알림 구독
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  endpoint TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+

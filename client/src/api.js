@@ -113,6 +113,20 @@ export function openFriendChatApi(friendId, displayName) {
   });
 }
 
+export function setNicknameApi(friendId, nickname) {
+  return api('/api/friends/nickname', {
+    method: 'POST',
+    body: JSON.stringify({ friendId, nickname }),
+  });
+}
+
+export function subscribePushApi(subscription) {
+  return api('/api/push/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ subscription }),
+  });
+}
+
 export function fetchFeed() {
   return api('/api/feed');
 }

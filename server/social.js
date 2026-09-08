@@ -107,6 +107,7 @@ async function listFriends(myId) {
   const byId = Object.fromEntries(users.map((u) => [u.id, u.username]));
 
   const warmthRows = await getWarmthMap(myId, otherIds);
+  const nickMap = await getNicknameMap(myId, otherIds);
 
   const friends = [];
   const incoming = [];
@@ -117,6 +118,7 @@ async function listFriends(myId) {
     const item = {
       id: oid,
       username: byId[oid] || '?',
+      nickname: nickMap[oid] || null,
       degrees: warmthRows[oid] || 0,
     };
     if (r.status === 'accepted') friends.push(item);
@@ -126,6 +128,63 @@ async function listFriends(myId) {
 
   friends.sort((a, b) => b.degrees - a.degrees);
   return { friends, incoming, outgoing };
+}
+
+async function getNicknameMap(myId, friendIds) {
+  const db = getDb();
+  const map = {};
+  if (!db || !friendIds.length) return map;
+  const { data } = await db
+    .from('friend_nicknames')
+    .select('friend_id, nickname')
+    .eq('user_id', myId)
+    .in('friend_id', friendIds);
+  for (const row of data || []) map[row.friend_id] = row.nickname;
+  return map;
+}
+
+async function setFriendNickname(myId, friendId, nickname) {
+  const db = getDb();
+  if (!db) throw new Error('DB가 연결되지 않았어요');
+
+  const [user_a, user_b] = pair(myId, friendId);
+  const { data: fr } = await db
+    .from('friendships')
+    .select('status')
+    .eq('user_a', user_a)
+    .eq('user_b', user_b)
+    .maybeSingle();
+  if (!fr || fr.status !== 'accepted') throw new Error('친구만 애칭을 지정할 수 있어요');
+
+  const name = String(nickname || '').trim().slice(0, 12);
+  if (!name) {
+    await db.from('friend_nicknames').delete().eq('user_id', myId).eq('friend_id', friendId);
+    return { nickname: null };
+  }
+
+  const { error } = await db.from('friend_nicknames').upsert(
+    {
+      user_id: myId,
+      friend_id: friendId,
+      nickname: name,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,friend_id' }
+  );
+  if (error) throw new Error(error.message);
+  return { nickname: name };
+}
+
+async function getNickname(myId, friendId) {
+  const db = getDb();
+  if (!db) return null;
+  const { data } = await db
+    .from('friend_nicknames')
+    .select('nickname')
+    .eq('user_id', myId)
+    .eq('friend_id', friendId)
+    .maybeSingle();
+  return data?.nickname || null;
 }
 
 async function getWarmthMap(myId, otherIds) {
@@ -208,22 +267,29 @@ async function openFriendChat(myId, friendId, myDisplayName) {
 
   const roomCode = dmRoomCode(myId, friendId);
   const myName = myDisplayName || '나';
-  const friendName = friend?.username || '친구';
+  const myNickForFriend = (await getNickname(myId, friendId)) || friend?.username || '친구';
+  const theirNickForMe = (await getNickname(friendId, myId)) || myName;
 
   await joinUserRoom(myId, {
     roomCode,
     displayName: myName,
-    friendName,
+    friendName: myNickForFriend,
   });
   await joinUserRoom(friendId, {
     roomCode,
-    displayName: friendName,
-    friendName: myName,
+    displayName: friend?.username || '친구',
+    friendName: theirNickForMe,
   });
 
   const rooms = await listUserRooms(myId);
   const degrees = await getWarmthBetween(myId, friendId);
-  return { roomCode, rooms, degrees, friendUsername: friendName };
+  return {
+    roomCode,
+    rooms,
+    degrees,
+    friendUsername: friend?.username,
+    friendNickname: myNickForFriend,
+  };
 }
 
 async function listFeed(myId) {
@@ -345,6 +411,8 @@ module.exports = {
   requestFriend,
   respondFriend,
   listFriends,
+  setFriendNickname,
+  getNickname,
   bumpWarmth,
   getWarmthBetween,
   openFriendChat,

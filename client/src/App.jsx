@@ -15,7 +15,9 @@ import {
   updateFriendApi,
   getActiveRoomCode,
   setActiveRoomCode,
+  subscribePushApi,
 } from './api';
+import { enableNotifications } from './notifications';
 
 export default function App() {
   const [user, setUser] = useState(() => (getToken() ? getUser() : null));
@@ -25,6 +27,34 @@ export default function App() {
   const [showHome, setShowHome] = useState(true);
   const [bootError, setBootError] = useState('');
   const [tab, setTab] = useState('chat');
+
+  useEffect(() => {
+    if (!user) return;
+
+    enableNotifications(subscribePushApi).catch(() => {});
+
+    const onMessage = (event) => {
+      if (event.data?.type === 'OPEN_ROOM' && event.data.roomCode) {
+        setActiveRoomCode(event.data.roomCode);
+        setActive(event.data.roomCode);
+        setShowHome(false);
+        setTab('chat');
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', onMessage);
+
+    const params = new URLSearchParams(window.location.search);
+    const roomFromUrl = params.get('room');
+    if (roomFromUrl) {
+      setActiveRoomCode(roomFromUrl);
+      setActive(roomFromUrl);
+      setShowHome(false);
+      setTab('chat');
+      window.history.replaceState({}, '', '/');
+    }
+
+    return () => navigator.serviceWorker?.removeEventListener('message', onMessage);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;

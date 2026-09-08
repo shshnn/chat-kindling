@@ -17,12 +17,14 @@ const {
   joinUserRoom,
   updateUserRoomFriend,
   leaveUserRoom,
+  listRoomMemberIds,
   clearRoomMemberships,
 } = require('./auth');
 const {
   requestFriend,
   respondFriend,
   listFriends,
+  setFriendNickname,
   bumpWarmth,
   getWarmthBetween,
   openFriendChat,
@@ -31,6 +33,7 @@ const {
   toggleLike,
   addComment,
 } = require('./social');
+const { getVapidPublicKey, saveSubscription, notifyUsers } = require('./push');
 
 const app = express();
 const server = http.createServer(app);
@@ -180,6 +183,27 @@ app.post('/api/friends/chat', authMiddleware, async (req, res) => {
   }
 });
 
+app.post('/api/friends/nickname', authMiddleware, async (req, res) => {
+  try {
+    const { friendId, nickname } = req.body || {};
+    res.json(await setFriendNickname(req.user.id, friendId, nickname));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/push/vapid-public', (_req, res) => {
+  res.json({ publicKey: getVapidPublicKey() });
+});
+
+app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
+  try {
+    res.json(await saveSubscription(req.user.id, req.body?.subscription));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get('/api/feed', authMiddleware, async (req, res) => {
   try {
     res.json({ posts: await listFeed(req.user.id) });
@@ -305,6 +329,22 @@ io.on('connection', (socket) => {
     }
 
     io.to(currentRoom).emit('new-message', message);
+
+    const memberIds = await listRoomMemberIds(currentRoom);
+    const others = memberIds.filter((id) => id !== userId);
+
+    if (others.length) {
+      const preview = message.text
+        ? message.text.slice(0, 60)
+        : message.imageUrl
+          ? '사진을 보냈어요 📷'
+          : '새 메시지';
+      notifyUsers(others, {
+        title: `${userName}`,
+        body: preview,
+        roomCode: currentRoom,
+      }).catch(() => {});
+    }
 
     const room = getActiveRoom(currentRoom);
     if (room.users.length === 2) {

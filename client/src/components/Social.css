@@ -74,6 +74,53 @@
   gap: 6px;
 }
 
+.friend-card {
+  border-bottom: 1px solid var(--mint-light);
+  padding: 4px 0 10px;
+}
+
+.friend-card .friend-row {
+  border-bottom: none;
+}
+
+.friend-display {
+  font-size: 15px;
+}
+
+.nick-edit {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.nick-edit input {
+  flex: 1;
+  border: 2px solid var(--mint-light);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.nick-edit button {
+  border: none;
+  background: var(--mint-dark);
+  color: white;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nick-edit .ghost {
+  background: var(--mint-light);
+  color: var(--mint-dark);
+}
+
+.friend-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .temp-badge {
   font-size: 12px;
   color: #c17a3a;

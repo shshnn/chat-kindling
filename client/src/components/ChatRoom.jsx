@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import MessageBubble from './MessageBubble';
 import { roomLabel } from '../api';
+import { showLocalNotification } from '../notifications';
 import './ChatRoom.css';
 import './Social.css';
 
@@ -88,6 +89,12 @@ export default function ChatRoom({
 
     socket.on('new-message', (msg) => {
       setMessages((prev) => [...prev, msg]);
+      if (msg.senderUserId !== userIdRef.current) {
+        showLocalNotification(
+          msg.sender || 'Kindling',
+          msg.text || (msg.imageUrl ? '사진을 보냈어요 📷' : '새 메시지')
+        );
+      }
     });
 
     socket.on('user-joined', ({ users: roomUsers, warmth: w }) => {

@@ -4,6 +4,7 @@ import {
   requestFriendApi,
   respondFriendApi,
   openFriendChatApi,
+  setNicknameApi,
 } from '../api';
 import './Social.css';
 
@@ -14,6 +15,8 @@ export default function Friends({ user, onOpenChat }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [nickDraft, setNickDraft] = useState('');
 
   async function load() {
     setLoading(true);
@@ -62,6 +65,16 @@ export default function Friends({ user, onOpenChat }) {
     try {
       const data = await openFriendChatApi(friend.id, user.username);
       onOpenChat?.(data);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function handleSaveNick(friendId) {
+    try {
+      await setNicknameApi(friendId, nickDraft);
+      setEditingId(null);
+      await load();
     } catch (err) {
       alert(err.message);
     }
@@ -116,12 +129,47 @@ export default function Friends({ user, onOpenChat }) {
         <h3>내 친구</h3>
         {friends.length === 0 && <p className="muted">아직 친구가 없어요</p>}
         {friends.map((f) => (
-          <div key={f.id} className="friend-row">
-            <div>
-              <div>@{f.username}</div>
-              <div className="temp-badge">친밀온도 {f.degrees}°</div>
+          <div key={f.id} className="friend-card">
+            <div className="friend-row">
+              <div>
+                <div className="friend-display">
+                  {f.nickname ? (
+                    <>
+                      <strong>{f.nickname}</strong>
+                      <span className="muted"> @{f.username}</span>
+                    </>
+                  ) : (
+                    <strong>@{f.username}</strong>
+                  )}
+                </div>
+                <div className="temp-badge">친밀온도 {f.degrees}°</div>
+              </div>
+              <div className="friend-actions">
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={() => {
+                    setEditingId(f.id);
+                    setNickDraft(f.nickname || '');
+                  }}
+                >
+                  애칭
+                </button>
+                <button type="button" onClick={() => handleChat(f)}>채팅</button>
+              </div>
             </div>
-            <button type="button" onClick={() => handleChat(f)}>채팅</button>
+            {editingId === f.id && (
+              <div className="nick-edit">
+                <input
+                  value={nickDraft}
+                  onChange={(e) => setNickDraft(e.target.value)}
+                  placeholder="애칭 입력 (비우면 삭제)"
+                  maxLength={12}
+                />
+                <button type="button" onClick={() => handleSaveNick(f.id)}>저장</button>
+                <button type="button" className="ghost" onClick={() => setEditingId(null)}>취소</button>
+              </div>
+            )}
           </div>
         ))}
       </section>

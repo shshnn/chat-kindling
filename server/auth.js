@@ -160,6 +160,16 @@ async function leaveUserRoom(userId, roomCode) {
   return listUserRooms(userId);
 }
 
+async function listRoomMemberIds(roomCode) {
+  const db = getDb();
+  if (!db) return [];
+  const { data } = await db
+    .from('user_rooms')
+    .select('user_id')
+    .eq('room_code', roomCode.toUpperCase());
+  return (data || []).map((r) => r.user_id);
+}
+
 async function clearRoomMemberships(roomCode) {
   const db = getDb();
   if (!db) return;
@@ -175,6 +185,7 @@ module.exports = {
   joinUserRoom,
   updateUserRoomFriend,
   leaveUserRoom,
+  listRoomMemberIds,
   clearRoomMemberships,
   JWT_SECRET,
 };
